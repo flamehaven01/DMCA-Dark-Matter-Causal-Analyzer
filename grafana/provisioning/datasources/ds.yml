@@ -1,0 +1,13 @@
+apiVersion: 1
+deleteDatasources:
+  - name: SIDRCE Infinity
+    orgId: 1
+
+datasources:
+  - name: SIDRCE Infinity
+    type: yesoreyeram-infinity-datasource
+    access: proxy
+    isDefault: true
+    jsonData:
+      global_queries: []
+    secureJsonData: {}

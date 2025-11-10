@@ -1,0 +1,58 @@
+{
+  "title": "DMCA FinOps (SIDRCE)",
+  "uid": "dmca-finops",
+  "timezone": "browser",
+  "panels": [
+    {
+      "type": "table",
+      "title": "SIDRCE Report",
+      "gridPos": {"x": 0, "y": 0, "w": 24, "h": 8},
+      "targets": [
+        {
+          "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "-100"},
+          "type": "json",
+          "url": "http://sidrce:8080/report",
+          "format": "table",
+          "root_selector": "",
+          "columns": [
+            {"selector": "fti_avg", "text": "FTI(avg)"},
+            {"selector": "lambda_effective", "text": "\u03bb_effective"},
+            {"selector": "medians.qps", "text": "QPS(med)"},
+            {"selector": "medians.latency_p95_ms", "text": "Latency_p95(med)"},
+            {"selector": "medians.infra_cost_usd", "text": "Cost(med)"}
+          ]
+        }
+      ]
+    },
+    {
+      "type": "gauge",
+      "title": "FTI(avg)",
+      "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+      "targets": [
+        {
+          "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "-100"},
+          "type": "json",
+          "url": "http://sidrce:8080/report",
+          "root_selector": "",
+          "columns": [{"selector": "fti_avg", "text": "fti"}]
+        }
+      ]
+    },
+    {
+      "type": "gauge",
+      "title": "\u03bb_effective",
+      "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+      "targets": [
+        {
+          "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "-100"},
+          "type": "json",
+          "url": "http://sidrce:8080/report",
+          "root_selector": "",
+          "columns": [{"selector": "lambda_effective", "text": "lambda"}]
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "version": 1
+}

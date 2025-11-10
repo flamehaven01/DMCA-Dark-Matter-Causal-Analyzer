@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DMCA Ops Telemetry v1",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": ["domain", "step", "infra_cost_usd", "qps", "latency_p95_ms"],
+      "properties": {
+        "domain": {"type": "string"},
+        "hypothesis": {"type": ["string", "null"]},
+        "step": {"type": ["integer", "number"]},
+        "intervention": {"type": ["string", "null"]},
+        "infra_cost_usd": {"type": ["number", "integer"]},
+        "qps": {"type": ["number", "integer"]},
+        "latency_p95_ms": {"type": ["number", "integer"]}
+      },
+      "additionalProperties": true
+    },
+    {
+      "type": "object",
+      "required": ["enc", "alg", "nonce", "ct"],
+      "properties": {
+        "enc": {"const": true},
+        "alg": {"const": "AES-GCM"},
+        "nonce": {"type": "string"},
+        "aad": {"type": ["string", "null"]},
+        "ct": {"type": "string"}
+      },
+      "additionalProperties": true
+    }
+  ]
+}

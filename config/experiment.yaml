@@ -1,0 +1,24 @@
+version: "1.0.5"
+seed: 2025
+steps: 8
+
+# Simulation domains
+domains:
+  direct_lab:
+    hypothesis: [WIMP, Axion]
+    interventions:
+      "3": "shield_upgrade"
+      "5": "long_integration"
+
+  cosmology:
+    hypothesis: [DarkPhoton, SterileNeutrino]
+    interventions:
+      "2": "deeper_exposure"
+      "6": "better_psf"
+
+# Tokenizer settings
+tokenizer:
+  bands: [VL, L, M, H, VH]
+  gain: 1.0
+
+# Note: Causal analysis is not performed in simulate mode

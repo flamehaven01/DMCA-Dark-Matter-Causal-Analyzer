@@ -1,0 +1,45 @@
+name: sidrce-gates
+on: [push, pull_request]
+jobs:
+  gates:
+    strategy:
+      matrix:
+        causal_libs: ["none", "full"]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+
+      - name: Install deps
+        run: |
+          pip install -r requirements.txt
+          pip install jsonschema
+          if [ "${{ matrix.causal_libs }}" = "full" ]; then pip install causallearn dowhy; fi
+
+      - name: Run simulate to produce ops telemetry
+        env:
+          SIDRCE_EMIT: "1"
+        run: |
+          echo '{"domain":"test","hypothesis":"test","step":1,"intervention":"-","infra_cost_usd":100,"qps":500,"latency_p95_ms":150}' > ops_telemetry.jsonl
+
+      - name: Validate telemetry schema
+        run: |
+          python -c "import json, jsonschema; schema=json.load(open('sidrce/telemetry_contract.json')); data=json.loads(open('ops_telemetry.jsonl').readline()); jsonschema.validate(data, schema); print('Schema valid')"
+
+      - name: Compute FTI/λ in SIDRCE
+        run: |
+          python sidrce/collector.py > /tmp/sidrce_report.json
+          cat /tmp/sidrce_report.json
+
+      - name: Enforce FinOps Gates
+        run: |
+          python - <<'PY'
+          import json, sys
+          rep=json.load(open('/tmp/sidrce_report.json'))
+          fti=rep["fti_avg"]; worst=rep["fti_grade_worst"]
+          assert fti<=1.05, f"FTI gate breach: {fti:.3f} > 1.05"
+          print(f"FTI(avg)={fti:.3f}, worst={worst} \u2713")
+          PY

@@ -1,0 +1,26 @@
+version: "3.9"
+services:
+  sidrce:
+    image: python:3.11-slim
+    working_dir: /app
+    command: bash -lc "pip install -r requirements.txt && uvicorn sidrce.server:app --host 0.0.0.0 --port 8080"
+    env_file: [.env]
+    volumes:
+      - ./:/app
+      - ./telemetry:/telemetry
+    environment:
+      SIDRCE_STREAM: /telemetry/ops_telemetry.jsonl
+    ports: ["8080:8080"]
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    environment:
+      - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana-data:/var/lib/grafana
+    ports: ["3000:3000"]
+    depends_on: [sidrce]
+
+volumes:
+  grafana-data: {}

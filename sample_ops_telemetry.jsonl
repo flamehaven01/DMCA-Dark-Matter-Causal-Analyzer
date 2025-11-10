@@ -1,0 +1,2 @@
+{"domain":"direct_lab","hypothesis":"WIMP","step":1,"intervention":"-","infra_cost_usd":120.0,"qps":480.0,"latency_p95_ms":180.0}
+{"domain":"cosmology","hypothesis":"DarkPhoton","step":1,"intervention":"-","infra_cost_usd":102.0,"qps":510.0,"latency_p95_ms":170.0}
