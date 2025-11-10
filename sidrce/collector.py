@@ -11,6 +11,8 @@ from typing import Iterable, Dict, Any, List
 
 try:
     from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+import logging
+logger = logging.getLogger(__name__)
     _HAS_CRYPTO = True
 except Exception:
     _HAS_CRYPTO = False
@@ -127,7 +129,7 @@ def run_collect(in_path: str = "ops_telemetry.jsonl",
     )
     payload = {**summary, "lambda_effective": lam}
     Path(out_path).write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
-    print(json.dumps(payload, indent=2, ensure_ascii=False))
+    logger.info(json.dumps(payload, indent=2, ensure_ascii=False))
     return payload
 
 if __name__ == "__main__":

@@ -297,3 +297,12 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 **Version**: 1.0.5
 **Last Updated**: 2025-01-10
+
+<!-- asdp:status:start -->
+### Investor-ASDP Status
+- Ω: **0.8** (Review)
+- Integrity/Resonance/Stability: 1.0/0.0/1.0
+- Coverage: None
+- SAST High: 0 | Secrets: 0 | Vulns High: 0
+<!-- asdp:status:end -->
+

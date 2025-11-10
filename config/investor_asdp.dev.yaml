@@ -1,0 +1,95 @@
+version: "2.0-dev"
+modes:
+  # auto: check → quick-fix → re-check → version bump → changelog/readme → (optional) git commit/tag
+  bump_strategy: "auto"        # auto | patch | minor | major
+  commit: true                  # auto 커밋/태그 허용 (git 없는 경우 자동 무시)
+  create_tag: true
+
+weights:                         # Ω = 0.50 I + 0.20 R + 0.30 S
+  integrity: 0.50
+  resonance: 0.20
+  stability: 0.30
+
+gates:
+  certified: 0.85
+  review: 0.70
+
+metrics:
+  thresholds:
+    coverage_min: 0.60
+    complexity_avg_max: 10
+    duplication_pct_max: 0.10
+    sast_high_max: 0
+    secrets_max: 0
+    vulns_high_max: 0
+
+tools:
+  enable:
+    semgrep: true
+    bandit: true
+    safety: true
+    gitleaks: true
+    radon: true
+    jscpd: true
+    trivy: true
+  timeouts_sec:
+    semgrep: 90
+    bandit: 60
+    safety: 30
+    gitleaks: 45
+    radon: 45
+    jscpd: 45
+    trivy: 90
+
+spicy_rules:                     # "빠르게 고칠 5가지" 후보 + 자동수정 가능여부
+  - id: no_hardcoded_keys
+    grep: "(AKIA|ASIA|AIza|sk-live|ghp_)[A-Za-z0-9_\\-]{8,}"
+    advice: "비밀 제거: .env + Vault/KMS, 코드에는 참조만"
+    autofix: false               # (보안상 자동치환 금지: 수동 제거 유도)
+
+  - id: requests_no_timeout
+    grep: "requests\\.(get|post|put|patch|delete)\\([^\\)]*\\)"
+    advice: "네트워크 호출 timeout=10, retry(backoff) 추가"
+    autofix: true                # timeout 파라미터 자동 삽입
+
+  - id: print_in_lib
+    grep: "print\\("
+    advice: "라이브러리 코드에는 logger 사용"
+    autofix: true                # logger로 치환 + import/loggger 삽입
+
+  - id: broad_except
+    grep: "except\\s*:\\s*"
+    advice: "예외 범위 축소(Exception 종류 명시) + 로깅"
+    autofix: true                # except Exception: 로 변경
+
+  - id: todo_fixtures
+    grep: "TODO|FIXME"
+    advice: "PR 전 TODO/FIXME 처리 또는 이슈 링크"
+    autofix: false               # 문맥 의존 → 리포팅만
+
+readme:
+  status_block:             # README 상태 블록(없으면 생성)
+    start: "<!-- asdp:status:start -->"
+    end: "<!-- asdp:status:end -->"
+    title: "Investor-ASDP Status"
+
+changelog:
+  file: "CHANGELOG.md"
+  heading: "## [${version}] - ${date}"
+  bullets:
+    - "Auto-fix: ${fix_count} quick patches (print→logger, timeout, broad except)"
+    - "Security/SAST: High=${sast_high}, Secrets=${secrets}, VulnsHigh=${vulns_high}"
+    - "Quality: Coverage=${coverage_p}%, CC_avg=${cc_avg}, Dup=${dup_p}%"
+  tag_prefix: "v"
+
+version_files:                   # 버전 탐색·갱신 순서
+  - kind: "pyproject"
+    path: "pyproject.toml"
+  - kind: "package"
+    path: "package.json"
+  - kind: "setupcfg"
+    path: "setup.cfg"
+  - kind: "initpy"
+    path: "**/__init__.py"
+  - kind: "plain"
+    path: "VERSION"
