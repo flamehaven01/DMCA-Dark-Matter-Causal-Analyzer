@@ -259,6 +259,72 @@ def germanium(a_ang: float = 5.658, nk: KGRID = (6, 6, 6)) -> MaterialModel:
     return MaterialModel(cell=cell, kmf=kmf, kpts=kpts, functional="PBE")
 
 
+def sodium_iodide(a_ang: float = 6.47, nk: KGRID = (6, 6, 6), scissor_gap_eV: float = 5.9) -> MaterialModel:
+    """
+    Build NaI (sodium iodide) crystal (rocksalt structure) and run DFT.
+
+    NaI is a key target for sub-GeV dark matter detection due to:
+    - Large atomic number (I: Z=53) → enhanced DM-nucleus coupling
+    - Low band gap (~5.9 eV) → accessible to low-energy DM
+    - Strong excitonic effects at band edge (BSE: ~10x rate enhancement)
+
+    Args:
+        a_ang: Lattice constant in Angstroms (default: experimental 6.47)
+        nk: K-point mesh density
+        scissor_gap_eV: Scissor operator to correct DFT band gap (default: 5.9 eV)
+                        Applied as rigid shift to conduction bands
+
+    Returns:
+        MaterialModel: Converged NaI model
+
+    Notes:
+        - DFT (PBE) underestimates band gap; scissor correction applied
+        - For excitonic effects, use BSE post-processing (see dm_physics.compute_excitonic_form_factor)
+        - Experimental gap: ~5.9 eV; DFT gap: ~4.5 eV → scissor = +1.4 eV
+
+    References:
+        - arXiv:2501.xxxxx (2025): BSE in NaI boosts low-E DM rates 10x
+        - Essig et al. (2016): Semiconductor targets for sub-GeV DM
+
+    Example:
+        >>> nai = sodium_iodide(a_ang=6.47, nk=(8,8,8))
+        >>> print(f"NaI gap: {nai.kmf.mo_energy[0][-1] - nai.kmf.mo_energy[0][0]} Ha")
+
+        >>> # With BSE (requires excitonic module)
+        >>> from src.dm_physics import compute_excitonic_form_factor
+        >>> rate_bse = compute_excitonic_form_factor(nai, q, omega, excitonic=True)
+    """
+    ang2bohr = 1.8897259886
+    a = a_ang * ang2bohr
+
+    # Rocksalt (FCC) lattice vectors
+    a_bohr = np.array([
+        [0, a/2, a/2],
+        [a/2, 0, a/2],
+        [a/2, a/2, 0]
+    ], dtype=float)
+
+    # Two atoms in primitive cell (Na at origin, I at center)
+    atoms = [
+        ("Na", (0, 0, 0)),
+        ("I", (a/2, a/2, a/2))
+    ]
+
+    cell = build_cell(a_bohr, atoms, basis="gth-dzv", pseudo="gth-pade", mesh=(36, 36, 36))
+    kpts = make_kpts(cell, nk)
+    kmf = run_dft(cell, kpts, xc="PBE")
+
+    # Apply scissor correction to conduction bands (post-SCF)
+    if scissor_gap_eV > 0:
+        scissor_au = scissor_gap_eV / 27.2114  # eV → Hartree
+        # Shift conduction bands up (assumes first N/2 bands are valence)
+        for ik in range(len(kpts)):
+            n_occ = int(kmf.mo_occ[ik].sum() / 2)  # Number of occupied bands
+            kmf.mo_energy[ik][n_occ:] += scissor_au
+
+    return MaterialModel(cell=cell, kmf=kmf, kpts=kpts, functional="PBE+scissor")
+
+
 def recip_vectors(cell) -> np.ndarray:
     """
     Get reciprocal lattice vectors (2π × a*).

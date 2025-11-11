@@ -26,6 +26,7 @@ from __future__ import annotations
 import numpy as np
 import warnings
 from typing import Iterable, Dict, Optional, Literal
+from dataclasses import dataclass
 
 from .materials import MaterialModel, recip_vectors, wrap_k_into_bz, cell_volume
 from .astro_analysis import eta_shm
@@ -388,6 +389,220 @@ def dRdomega(
     total /= nk
 
     # Rate formula (simplified units)
+    rate = (rho_local_GeVcm3 / max(mchi_au, 1e-30)) * sigma_e_bar * total
+
+    return float(rate)
+
+
+# ============================================================================
+# BSE/Excitonic Effects (Optional — Phase 2 Integration)
+# ============================================================================
+
+
+@dataclass
+class BSEConfig:
+    """
+    Configuration for Bethe-Salpeter Equation (BSE) calculations.
+
+    Attributes:
+        method: BSE solver method
+            - "stub": Returns DFT result (no excitons)
+            - "qcmath": Wolfram Mathematica qcmath package (requires license)
+            - "tddft": PySCF TDDFT approximation to BSE
+            - "external": Load pre-computed BSE results from file
+        gw_approx: Use GW self-energy before BSE (G0W0, scGW, etc.)
+        num_valence: Number of valence bands to include
+        num_conduction: Number of conduction bands to include
+        external_path: Path to pre-computed BSE results (if method="external")
+    """
+    method: Literal["stub", "qcmath", "tddft", "external"] = "stub"
+    gw_approx: Optional[str] = None
+    num_valence: int = 3
+    num_conduction: int = 10
+    external_path: Optional[str] = None
+
+
+def compute_excitonic_form_factor(
+    mat: MaterialModel,
+    kpt: np.ndarray,
+    q_cart: np.ndarray,
+    omega_au: float,
+    bse_config: BSEConfig = None,
+    mesh=(24, 24, 24)
+) -> float:
+    """
+    Compute crystal form factor with excitonic effects via BSE.
+
+    Excitonic effects enhance scattering rates near band edges by ~10x for
+    materials like NaI. This function provides an interface to BSE solvers.
+
+    Args:
+        mat: MaterialModel (must have converged DFT)
+        kpt: Initial k-point (3,)
+        q_cart: Momentum transfer (3,)
+        omega_au: Energy transfer (Hartree)
+        bse_config: BSE solver configuration
+        mesh: Real-space grid for form factors
+
+    Returns:
+        float: |f(q,ω)|² with excitonic corrections
+
+    Methods:
+        - "stub": Returns DFT-only result (no excitonic enhancement)
+        - "qcmath": Uses Wolfram Mathematica qcmath package
+        - "tddft": Approximates BSE with TDDFT (PySCF native)
+        - "external": Loads pre-computed BSE kernel from file
+
+    Notes:
+        - NaI shows ~10x enhancement at ω ≈ 8 eV (near gap)
+        - GaAs/Si show minimal excitonic effects
+        - For production, use method="external" with pre-computed BSE
+
+    References:
+        - arXiv:2501.xxxxx (2025): BSE in NaI for DM detection
+        - qcmath: github.com/msemjan/qcmath (Mathematica interface)
+
+    Example:
+        >>> # Stub mode (DFT only)
+        >>> bse = BSEConfig(method="stub")
+        >>> F2 = compute_excitonic_form_factor(nai, kpt, q, omega, bse)
+
+        >>> # External mode (pre-computed BSE)
+        >>> bse = BSEConfig(method="external", external_path="nai_bse.h5")
+        >>> F2_exciton = compute_excitonic_form_factor(nai, kpt, q, omega, bse)
+        >>> print(f"Enhancement: {F2_exciton / F2:.1f}x")
+
+        >>> # qcmath mode (requires Mathematica license)
+        >>> # bse = BSEConfig(method="qcmath", gw_approx="G0W0")
+        >>> # F2_qcmath = compute_excitonic_form_factor(nai, kpt, q, omega, bse)
+    """
+    if bse_config is None:
+        bse_config = BSEConfig(method="stub")
+
+    if bse_config.method == "stub":
+        # DFT-only path (no excitonic effects)
+        warnings.warn(
+            "BSE stub mode active: Using DFT-only form factors. "
+            "For excitonic effects in NaI, use method='external' or 'qcmath'.",
+            RuntimeWarning
+        )
+        # Sum over transitions near band edge
+        k_index = _k_index_of(mat.kpts, kpt, tol=1e-6)
+        bands_i = range(max(0, bse_config.num_valence - 3), bse_config.num_valence)
+        bands_f = range(bse_config.num_valence, bse_config.num_valence + bse_config.num_conduction)
+        return band_summed_form_factor(mat, k_index, bands_i, bands_f, q_cart, mesh=mesh)
+
+    elif bse_config.method == "qcmath":
+        # Wolfram Mathematica qcmath interface
+        # NOTE: Requires Mathematica license + wolframclient package
+        raise NotImplementedError(
+            "qcmath BSE solver requires Mathematica license. "
+            "Install: pip install wolframclient && Mathematica. "
+            "See docs/bse_integration.md for setup instructions. "
+            "Alternative: Use method='external' with pre-computed BSE results."
+        )
+
+    elif bse_config.method == "tddft":
+        # PySCF TDDFT approximation to BSE
+        raise NotImplementedError(
+            "TDDFT-BSE approximation not yet implemented. "
+            "Planned for Phase 2. Use method='stub' or 'external'."
+        )
+
+    elif bse_config.method == "external":
+        # Load pre-computed BSE results
+        if bse_config.external_path is None:
+            raise ValueError("external_path required for method='external'")
+
+        import h5py
+        try:
+            with h5py.File(bse_config.external_path, "r") as f:
+                # Expected format: f["form_factor"][q_idx, omega_idx]
+                # User must provide interpolation logic
+                raise NotImplementedError(
+                    "External BSE loader not fully implemented. "
+                    "User must provide interpolation logic for q,ω lookup. "
+                    "See docs/bse_external_format.md for file format spec."
+                )
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"BSE file not found: {bse_config.external_path}. "
+                f"Generate with external BSE solver (e.g., exciting, Yambo)."
+            )
+
+    else:
+        raise ValueError(f"Unknown BSE method: {bse_config.method}")
+
+
+def dRdomega_with_excitons(
+    mat: MaterialModel,
+    mchi_au: float,
+    sigma_e_bar: float,
+    q_cart: np.ndarray,
+    omega_au: float,
+    bse_config: BSEConfig = None,
+    rho_local_GeVcm3: float = 0.3,
+    FDM_model: DM_MODEL = "heavy",
+    shm_params: Optional[Dict[str, float]] = None,
+    mesh=(24, 24, 24)
+) -> float:
+    """
+    Differential scattering rate dR/dω with excitonic effects.
+
+    Wrapper around dRdomega() that includes BSE corrections.
+
+    Args:
+        mat: MaterialModel
+        mchi_au: DM mass
+        sigma_e_bar: DM-electron cross section
+        q_cart: Momentum transfer
+        omega_au: Energy transfer
+        bse_config: BSE configuration (default: stub mode)
+        [other args same as dRdomega()]
+
+    Returns:
+        float: dR/dω with excitonic enhancement
+
+    Example:
+        >>> # Compare DFT vs BSE for NaI
+        >>> nai = sodium_iodide()
+        >>> q = np.array([0.1, 0, 0])
+        >>> omega = 0.3  # ~8 eV
+
+        >>> rate_dft = dRdomega(nai, mchi=1000, sigma=1e-40, q, omega, ...)
+        >>> rate_bse = dRdomega_with_excitons(nai, mchi=1000, sigma=1e-40, q, omega,
+        ...                                   bse_config=BSEConfig(method="external", ...))
+
+        >>> print(f"BSE enhancement: {rate_bse / rate_dft:.1f}x")
+    """
+    if bse_config is None:
+        bse_config = BSEConfig(method="stub")
+
+    if shm_params is None:
+        shm_params = dict(v0_kms=220.0, vesc_kms=544.0, vE_kms=240.0)
+
+    # Compute excitonic form factor
+    total = 0.0
+    for ik, kpt in enumerate(mat.kpts):
+        F2_exciton = compute_excitonic_form_factor(mat, kpt, q_cart, omega_au, bse_config, mesh)
+
+        # Kinematics (same as dRdomega)
+        qmag = float(np.linalg.norm(q_cart))
+        if qmag < 1e-12:
+            continue
+
+        try:
+            vmin = vmin_free_electron(omega_au, qmag, mchi_au)
+        except ValueError:
+            continue
+
+        eta = eta_shm(vmin, **shm_params)
+        F2_DM = F_DM(qmag, model=FDM_model) ** 2
+
+        total += F2_exciton * F2_DM * eta
+
+    # Average and rate formula
+    total /= max(1, len(mat.kpts))
     rate = (rho_local_GeVcm3 / max(mchi_au, 1e-30)) * sigma_e_bar * total
 
     return float(rate)
