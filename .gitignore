@@ -54,3 +54,8 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# NNSL × DFI-META × SIDRCE runtime artifacts
+.dfi-meta/
+.meta-pytest/
+.sidrce/

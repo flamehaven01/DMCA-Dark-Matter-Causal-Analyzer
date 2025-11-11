@@ -1,0 +1,24 @@
+# ============================================================================
+# SIDRCE HSTA (Holistic Systems Traceability Aggregation) Configuration
+# ============================================================================
+# Defines weights and gates for NNSL × DFI-META × SIDRCE integration
+# Formula: Ω = wI·I + wP·P + w1mD·(1-D)
+#   I = Integrity (Meta-pytest quality score)
+#   P = Perfection (DFI-META evolution Omega)
+#   D = Drift (NNSL methodology drift estimate)
+# ============================================================================
+
+# Weight allocation (must sum to 1.0)
+weights:
+  wI: 0.45      # Integrity: Meta-quality from pytest reports
+  wP: 0.35      # Perfection: DFI-META final evolution score
+  w1mD: 0.20    # Stability: 1 - Drift (lower drift = higher contribution)
+
+# Quality gates
+gates:
+  pass_threshold: 0.90   # Minimum Omega for PASS (90%)
+
+# File paths
+paths:
+  meta_pytest_reports_dir: ".meta-pytest/reports"
+  dfi_meta_result: ".dfi-meta/evolution_results.json"
