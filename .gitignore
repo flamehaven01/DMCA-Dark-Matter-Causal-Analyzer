@@ -46,6 +46,9 @@ telemetry/*.jsonl
 # Docker
 grafana-data/
 
+# Generated data files (BSE HDF5 examples, test outputs)
+data/
+
 # OS
 .DS_Store
 Thumbs.db
