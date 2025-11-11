@@ -1,6 +1,53 @@
 # DMCA v1.0.6 — Dark Matter Causal Analyzer
 
-**Production-ready ops dashboard with critical performance & stability improvements.**
+**DevOps/FinOps framework for dark matter experimental workflows with causal inference capabilities.**
+
+---
+
+## 📋 Overview
+
+DMCA is a **production-grade infrastructure platform** designed for optimizing dark matter detection experiments through:
+
+### Current Capabilities (v1.0.6)
+
+**Operational Efficiency (Primary Focus):**
+- Real-time telemetry tracking for experimental runs (interventions, cost, performance metrics)
+- Causal inference on experimental parameters (PC algorithm + DoWhy + OLS fallback)
+- FinOps optimization: FTI (FinOps Tradeoff Index) for cost-effectiveness analysis
+- Evolution rate management: λ_effective for experimental parameter tuning
+- Production-ready monitoring stack (FastAPI + Prometheus + Grafana)
+
+**Use Cases:**
+1. **Experiment Workflow Optimization**: Track A/B tests (e.g., shield upgrades, integration time changes)
+2. **Resource Allocation**: Quantify cost vs. sensitivity tradeoffs across detector configurations
+3. **Causal Analysis**: Estimate intervention effects (e.g., "Does longer exposure improve signal-to-noise ratio?")
+4. **DevOps for Physics**: CI/CD gates, automated performance regression detection
+
+### Research Contribution Assessment
+
+**Current State:**
+- ✅ **Meta-level analysis**: Experiment management and optimization (~5-10% research contribution)
+- ✅ **Infrastructure tooling**: Applicable to XENON, LUX, PandaX-like experimental workflows
+- ❌ **Physics simulations**: Quantum chemistry modules (PySCF-based DFT, form factors) documented but **not yet implemented**
+
+**Future Potential (requires ~6-12 months development):**
+- 🔮 Crystal form factor calculations for DM-electron scattering (Si, Ge, GaAs)
+- 🔮 WIMP/Axion/DarkPhoton/SterileNeutrino cross-section predictions
+- 🔮 Integrated detector simulation pipeline (if Geant4 integration completed)
+
+### Target Audience
+
+- **Experimental teams**: Optimize detector operations, reduce infrastructure costs
+- **Small-to-medium research groups**: Unified workflow alternative to fragmented toolchains (VASP → custom scripts → statistical analysis)
+- **DevOps engineers in physics**: Production-ready monitoring for large-scale experiments
+
+### Honest Limitations
+
+- Does **not** replace specialized physics tools (VASP, Geant4, DarkSUSY) for detailed simulations
+- Physics calculation modules are architectural blueprints only (see `docs/pyscf-integration-technical-guide.md`)
+- Primary value is **operational efficiency**, not theoretical predictions
+
+---
 
 ## 🚨 What's New in v1.0.6 (Critical Update)
 
