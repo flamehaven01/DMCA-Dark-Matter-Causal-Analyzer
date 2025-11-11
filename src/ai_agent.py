@@ -102,7 +102,7 @@ class DMPhysicsAgent:
         # Full implementation: LLM query to knowledge base
 
         if material.lower() == "nai":
-            # NaI: Strong excitons at band edge (~6-10 eV)
+            # NaI: Strong excitons at band edge (~5-10 eV)
             if 5.0 <= omega_eV <= 10.0:
                 return AgentSuggestion(
                     action="use_bse",
@@ -119,7 +119,26 @@ class DMPhysicsAgent:
                     metadata={"material": material, "omega_eV": omega_eV}
                 )
 
-        elif material.lower() in ["si", "silicon", "ge", "germanium", "gaas"]:
+        elif material.lower() in ["csi", "cesium_iodide", "cesiumiodide"]:
+            # CsI: Moderate excitons (3-5x enhancement, weaker than NaI)
+            if 5.0 <= omega_eV <= 9.0:
+                return AgentSuggestion(
+                    action="use_bse",
+                    reason=f"CsI shows moderate excitonic effects at {omega_eV} eV. "
+                           f"Expected 3-5x rate enhancement (weaker than NaI's 10x). "
+                           f"Use BSE method='external' for production calculations.",
+                    confidence=0.85,
+                    metadata={"material": material, "omega_eV": omega_eV}
+                )
+            else:
+                return AgentSuggestion(
+                    action="dft_sufficient",
+                    reason=f"Energy {omega_eV} eV outside CsI excitonic window (5-9 eV). DFT adequate.",
+                    confidence=0.8,
+                    metadata={"material": material, "omega_eV": omega_eV}
+                )
+
+        elif material.lower() in ["si", "silicon", "ge", "germanium", "gaas", "gallium_arsenide", "galliumarsenide"]:
             # Si/Ge/GaAs: Weak excitons
             return AgentSuggestion(
                 action="dft_sufficient",
@@ -135,6 +154,60 @@ class DMPhysicsAgent:
                 reason=f"No BSE data for {material}. Recommend literature review or DFT-only baseline.",
                 confidence=0.5,
                 metadata={"material": material}
+            )
+
+    def recommend_material(
+        self,
+        mchi_GeV: float,
+        prioritize_excitons: bool = True
+    ) -> AgentSuggestion:
+        """
+        Recommend optimal material for given DM mass.
+
+        Args:
+            mchi_GeV: Dark matter mass in GeV
+            prioritize_excitons: Prefer materials with excitonic effects
+
+        Returns:
+            AgentSuggestion with material recommendation
+
+        Example:
+            >>> agent = DMPhysicsAgent()
+            >>> sug = agent.recommend_material(mchi_GeV=0.5)
+            >>> print(sug.action, sug.metadata["material"])
+            select_material NaI
+        """
+        # Stub logic: Use rule-based material selector from materials.py
+        # Full implementation: LLM query to materials database + user preferences
+
+        try:
+            from src.materials import select_material_by_dm_mass
+            material, rationale = select_material_by_dm_mass(mchi_GeV, prioritize_excitons)
+
+            return AgentSuggestion(
+                action="select_material",
+                reason=rationale,
+                confidence=0.9,
+                metadata={
+                    "material": material,
+                    "mchi_GeV": mchi_GeV,
+                    "prioritize_excitons": prioritize_excitons
+                }
+            )
+        except ImportError:
+            # Fallback if materials.py not available
+            if mchi_GeV < 2.0:
+                material = "NaI" if prioritize_excitons else "Si"
+            elif mchi_GeV < 10.0:
+                material = "Si"
+            else:
+                material = "Ge"
+
+            return AgentSuggestion(
+                action="select_material",
+                reason=f"Recommended {material} for m_χ = {mchi_GeV} GeV (fallback recommendation).",
+                confidence=0.7,
+                metadata={"material": material, "mchi_GeV": mchi_GeV}
             )
 
     def optimize_params(

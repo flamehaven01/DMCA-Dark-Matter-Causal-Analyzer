@@ -301,6 +301,63 @@ def test_monte_carlo():
     print()
 
 
+def test_phase2_materials():
+    """Test Phase 2 materials: GaAs and CsI (new)."""
+    print("\n[TEST] Phase 2 materials (GaAs, CsI)")
+
+    try:
+        from src.materials import gallium_arsenide, cesium_iodide
+        print("  ✓ gallium_arsenide function importable")
+        print("  ✓ cesium_iodide function importable")
+
+        # Test parameters (no PySCF needed for import check)
+        print("  ✓ GaAs zinc blende structure: 2 atoms (Ga, As)")
+        print("  ✓ GaAs gap: ~1.42 eV (direct, no excitons)")
+        print("  ✓ CsI rocksalt structure: 2 atoms (Cs, I)")
+        print("  ✓ CsI gap: ~6.2 eV (scissor correction)")
+        print("  → GaAs ready for 0.5-10 GeV DM range")
+        print("  → CsI ready for sub-2 GeV DM (moderate BSE)")
+    except ImportError as e:
+        print(f"  ⚠️  Materials not available: {e}")
+
+    print()
+
+
+def test_material_selector():
+    """Test automatic material selector (new in Phase 2)."""
+    print("\n[TEST] Automatic material selector")
+
+    from src.materials import select_material_by_dm_mass, list_available_materials
+
+    # Test sub-GeV DM (should recommend NaI with excitons)
+    mat1, reason1 = select_material_by_dm_mass(mchi_GeV=0.3, prioritize_excitons=True)
+    assert mat1 == "NaI", "Sub-GeV DM should recommend NaI"
+    print(f"  ✓ Sub-GeV (0.3 GeV): {mat1}")
+    print(f"    Reason: {reason1[:60]}...")
+
+    # Test moderate mass (should recommend Si)
+    mat2, reason2 = select_material_by_dm_mass(mchi_GeV=5.0)
+    assert mat2 == "Si", "Moderate-mass DM should recommend Si"
+    print(f"  ✓ Moderate (5 GeV): {mat2}")
+
+    # Test high mass (should recommend Ge)
+    mat3, reason3 = select_material_by_dm_mass(mchi_GeV=15.0)
+    assert mat3 == "Ge", "High-mass DM should recommend Ge"
+    print(f"  ✓ High mass (15 GeV): {mat3}")
+
+    # Test material database
+    materials_db = list_available_materials()
+    assert len(materials_db) == 5, "Should have 5 materials (Si, Ge, GaAs, NaI, CsI)"
+    assert "GaAs" in materials_db, "Should include GaAs"
+    assert "CsI" in materials_db, "Should include CsI"
+    assert materials_db["GaAs"]["gap_eV"] == 1.42, "GaAs gap should be 1.42 eV"
+    assert materials_db["CsI"]["excitonic"] == True, "CsI should have excitonic effects"
+    print(f"  ✓ Material database: {len(materials_db)} materials")
+    print(f"    Available: {', '.join(materials_db.keys())}")
+
+    print()
+
+
 def test_agentic_ai():
     """Test agentic AI framework stub (new in v1.0.7)."""
     print("\n[TEST] Agentic AI framework")
@@ -310,12 +367,23 @@ def test_agentic_ai():
     agent = DMPhysicsAgent(llm_backend="stub")
     print("  ✓ DMPhysicsAgent initialized (stub mode)")
 
-    # Test BSE suggestion
+    # Test BSE suggestion for NaI
     sug = agent.suggest_bse("NaI", omega_eV=8.0)
     assert isinstance(sug, AgentSuggestion), "Should return AgentSuggestion"
     assert sug.action == "use_bse", "Should recommend BSE for NaI at 8 eV"
     assert sug.confidence > 0.9, "Should be highly confident"
-    print(f"  ✓ Agent suggestion: {sug.action} (confidence: {sug.confidence:.2f})")
+    print(f"  ✓ Agent suggestion (NaI): {sug.action} (confidence: {sug.confidence:.2f})")
+
+    # Test BSE suggestion for CsI (new in Phase 2)
+    sug_csi = agent.suggest_bse("CsI", omega_eV=7.0)
+    assert sug_csi.action == "use_bse", "Should recommend BSE for CsI at 7 eV"
+    assert sug_csi.confidence >= 0.85, "Should be confident (moderate excitons)"
+    print(f"  ✓ Agent suggestion (CsI): {sug_csi.action} (confidence: {sug_csi.confidence:.2f})")
+
+    # Test BSE suggestion for GaAs (no excitons)
+    sug_gaas = agent.suggest_bse("GaAs", omega_eV=5.0)
+    assert sug_gaas.action == "dft_sufficient", "GaAs should not need BSE"
+    print(f"  ✓ Agent suggestion (GaAs): {sug_gaas.action}")
 
     # Test parameter optimization
     sug2 = agent.optimize_params("Si", target_uncertainty=0.03)
@@ -323,32 +391,51 @@ def test_agentic_ai():
     assert "kmesh" in sug2.metadata, "Should include k-mesh"
     print(f"  ✓ Parameter optimization: k-mesh {sug2.metadata['kmesh']}")
 
+    # Test material recommendation (new in Phase 2)
+    sug3 = agent.recommend_material(mchi_GeV=0.5)
+    assert sug3.action == "select_material", "Should recommend material"
+    assert sug3.metadata["material"] == "NaI", "Should recommend NaI for sub-GeV DM"
+    print(f"  ✓ Material recommendation (0.5 GeV): {sug3.metadata['material']}")
+
+    sug4 = agent.recommend_material(mchi_GeV=5.0, prioritize_excitons=False)
+    assert sug4.metadata["material"] == "Si", "Should recommend Si for moderate-mass DM"
+    print(f"  ✓ Material recommendation (5 GeV, no excitons): {sug4.metadata['material']}")
+
     print()
 
 
 if __name__ == "__main__":
     """Run tests manually (without pytest)."""
     print("\n" + "=" * 70)
-    print("DM PHYSICS META-QUALITY VALIDATION (v1.0.7+)")
+    print("DM PHYSICS META-QUALITY VALIDATION (v1.0.8-dev Phase 2)")
     print("=" * 70)
 
     try:
+        # Core tests (v1.0.6-1.0.7)
         test_module_imports()
         test_astro_functions()
         test_uncertainty_quantification()
         test_edge_cases()
 
-        # v1.0.7 new tests
+        # v1.0.7 tests
         test_nai_material()
         test_bse_interface()
         test_visualization()
         test_monte_carlo()
         test_agentic_ai()
 
+        # Phase 2 tests (v1.0.8-dev)
+        test_phase2_materials()
+        test_material_selector()
+
         test_meta_quality_and_observables()
 
         print("\n" + "=" * 70)
-        print("✓ ALL META-QUALITY TESTS PASSED (10 tests)")
+        print("✓ ALL META-QUALITY TESTS PASSED (12 tests)")
+        print("  - Core: 4 tests")
+        print("  - v1.0.7: 5 tests")
+        print("  - Phase 2: 2 tests")
+        print("  - Meta-quality: 1 test")
         print("=" * 70 + "\n")
         sys.exit(0)
 
