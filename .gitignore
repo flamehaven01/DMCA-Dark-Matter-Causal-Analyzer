@@ -46,6 +46,9 @@ telemetry/*.jsonl
 # Docker
 grafana-data/
 
+# Generated data files (BSE HDF5 examples, test outputs)
+data/
+
 # OS
 .DS_Store
 Thumbs.db
@@ -54,3 +57,8 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# NNSL × DFI-META × SIDRCE runtime artifacts
+.dfi-meta/
+.meta-pytest/
+.sidrce/

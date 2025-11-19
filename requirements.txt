@@ -38,9 +38,14 @@ causallearn>=0.1.8
 dowhy>=0.11
 
 # ============================================================================
-# Chemistry & Physics (PySCF for v1.0.5)
+# Chemistry & Physics (DM-Electron Scattering — v1.0.7+)
 # ============================================================================
-# pyscf>=2.3.0  # Optional - uncomment if using chemistry modules
+# OPTIONAL: Uncomment to enable ab-initio crystal form factor calculations
+# Required for: src/materials.py, src/dm_physics.py
+# Modules work without PySCF (deferred imports), but calculations need it
+#
+# Installation note: PySCF requires ~500MB and compiles C extensions
+# pyscf>=2.3.0  # Quantum chemistry (DFT, PBC, FFTDF)
 
 # ============================================================================
 # Astrophysics & Cosmology (Optional)

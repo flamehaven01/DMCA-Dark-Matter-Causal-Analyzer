@@ -1,0 +1,23 @@
+# ============================================================================
+# NNSL (Neural Network Structural Learning) Configuration
+# ============================================================================
+# Dynamic capsule dimension management based on information metrics
+# ============================================================================
+
+capsule:
+  # Dimension bounds
+  dim_min: 8
+  dim_max: 64
+
+  # Adaptation steps
+  expand_step: 2     # Increase dimension by this amount when expanding
+  compact_step: 2    # Decrease dimension by this amount when compacting
+
+  # Information-theoretic thresholds
+  thresholds:
+    di2_low: 0.12     # Below this DI2: compact (reduce dimensions)
+    di2_high: 0.35    # Above this DI2: expand (increase dimensions)
+
+  # Metric weights for drift estimation
+  sr9_weight: 0.5     # Spectral radius (SR9) contribution
+  di2_weight: 0.5     # Dimensional integrity (DI2) contribution

@@ -1,0 +1,136 @@
+name: NNSL × DFI-META × SIDRCE (30 cycles)
+
+on:
+  push:
+    branches: [main, master, "claude/**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  nnsl-dfi-sidrce:
+    name: 30-Cycle Evolution + HSTA Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      OMP_NUM_THREADS: 2
+      MKL_NUM_THREADS: 2
+      NUMEXPR_MAX_THREADS: 2
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "requirements.txt"
+
+      - name: Install core dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          # Install optional dependencies for Phase 2 tests
+          pip install matplotlib>=3.9.0 h5py>=3.10
+
+      # ======================================================================
+      # Optional: Install PySCF for full physics calculations
+      # Uncomment to enable real electronic structure calculations
+      # Warning: Significantly increases CI runtime (~10-30 min)
+      # ======================================================================
+      # - name: Install PySCF (optional)
+      #   run: |
+      #     pip install pyscf>=2.3.0
+
+      - name: Verify installation
+        run: |
+          python -c "import numpy; import scipy; import yaml; print('✓ Core imports OK')"
+          python -c "from src import astro_analysis, advanced_paper_analysis; print('✓ Physics modules importable')"
+          python -c "import matplotlib; import h5py; print('✓ Optional deps OK (Phase 2)')"
+
+      - name: Run 30 evolution + meta-quality cycles
+        id: cycles
+        run: |
+          echo "=== Starting 30-Cycle Pipeline ==="
+          python scripts/run_30_cycles.py
+        continue-on-error: false
+
+      - name: Compute SIDRCE HSTA & Gate (Ω ≥ 90%)
+        id: hsta
+        run: |
+          echo "=== Computing HSTA Aggregation ==="
+          python scripts/compute_hsta.py
+        continue-on-error: false
+
+      - name: Display gate result
+        if: always()
+        run: |
+          echo ""
+          echo "======================================================================="
+          echo "SIDRCE HSTA REPORT"
+          echo "======================================================================="
+          if [ -f .sidrce/hsta_report.json ]; then
+            cat .sidrce/hsta_report.json
+            echo ""
+            echo "======================================================================="
+
+            # Parse result
+            PASSED=$(jq -r '.passed' .sidrce/hsta_report.json)
+            OMEGA=$(jq -r '.Omega_pct' .sidrce/hsta_report.json)
+
+            if [ "$PASSED" == "true" ]; then
+              echo "✓ GATE PASSED — Omega: ${OMEGA}%"
+            else
+              echo "✗ GATE FAILED — Omega: ${OMEGA}% (threshold: 90%)"
+              exit 1
+            fi
+          else
+            echo "⚠️  HSTA report not found"
+            exit 1
+          fi
+
+      - name: Upload SIDRCE reports (artifact)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sidrce-hsta-reports
+          path: |
+            .sidrce/hsta_report.json
+            .dfi-meta/evolution_results.json
+            .meta-pytest/reports/*.json
+          retention-days: 30
+
+      - name: Upload DFI-META evolution log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dfi-meta-evolution
+          path: .dfi-meta/
+          retention-days: 7
+
+      - name: Summary
+        if: always()
+        run: |
+          echo ""
+          echo "=== Pipeline Summary ==="
+          echo "- 30 DFI-META evolution cycles: COMPLETE"
+          echo "- 30 Meta-quality validation runs: COMPLETE"
+          echo "- SIDRCE HSTA aggregation: COMPLETE"
+          echo ""
+          if [ -f .sidrce/hsta_report.json ]; then
+            OMEGA=$(jq -r '.Omega_pct' .sidrce/hsta_report.json)
+            I=$(jq -r '.components.I_integrity' .sidrce/hsta_report.json)
+            P=$(jq -r '.components.P_perfection' .sidrce/hsta_report.json)
+            D=$(jq -r '.components.D_drift' .sidrce/hsta_report.json)
+            echo "Final Scores:"
+            echo "  I (Integrity):   ${I}"
+            echo "  P (Perfection):  ${P}"
+            echo "  D (Drift):       ${D}"
+            echo "  Ω (Aggregate):   ${OMEGA}%"
+          fi
