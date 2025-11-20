@@ -1,4 +1,4 @@
-# DMCA v1.0.8-dev — Dark Matter Causal Analyzer
+# DMCA v1.1.0-dev — Dark Matter Causal Analyzer
 
 **Production-grade platform for dark matter research: operational efficiency + ab-initio physics simulations + agentic AI workflows.**
 
