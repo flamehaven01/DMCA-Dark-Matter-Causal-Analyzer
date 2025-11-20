@@ -2,7 +2,7 @@
 
 **Production-grade platform for dark matter research: operational efficiency + ab-initio physics simulations + agentic AI workflows.**
 
-**Phase 2 (in development)**: Extended materials library (GaAs, CsI) + BSE production integration + automatic material selection
+**Phase 2 (Completed)**: Extended materials library (GaAs, CsI) + BSE production integration + AstroPy live halo data.
 
 ---
 
@@ -10,7 +10,7 @@
 
 DMCA is a **comprehensive research platform** for dark matter detection combining infrastructure optimization, quantum chemistry calculations, and AI-driven workflows:
 
-### Current Capabilities (v1.0.8-dev, Phase 2)
+### Current Capabilities (v1.1.0, Phase 2 Completed)
 
 **🔬 Physics Simulations (NEW in v1.0.7-1.0.8)**
 - **Ab-initio DM-electron scattering**: Crystal form factors with PySCF-PBC (Si, Ge, GaAs, NaI, CsI)
@@ -54,12 +54,12 @@ DMCA is a **comprehensive research platform** for dark matter detection combinin
 - ✅ **DevOps tooling**: Applicable to XENON, LUX, PandaX workflows
 - ✅ **500x performance**: Sub-ms /metrics endpoint with background caching
 
-**Phase 2 Progress:**
+**Phase 2 Progress (Completed):**
 - ✅ Extended materials (GaAs, CsI) with automatic selector — **COMPLETED**
 - ✅ BSE external format specification (HDF5) + generator — **COMPLETED**
-- 🚧 AstroPy live halo data (real-time Gaia satellite updates) — IN PROGRESS
-- 🚧 LangChain agentic AI (GPT-4, ArXiv search, hypothesis generation) — DEFERRED
-- 🚧 Wolfram qcmath integration for production BSE (10x accuracy) — DEFERRED (license)
+- ✅ AstroPy live halo data (real-time Gaia satellite updates) — **COMPLETED**
+- 🚧 LangChain agentic AI (GPT-4, ArXiv search) — DEFERRED (Phase 3)
+- 🚧 Wolfram qcmath integration — DEFERRED (Phase 3)
 
 ### Target Audience
 
@@ -76,7 +76,43 @@ DMCA is a **comprehensive research platform** for dark matter detection combinin
 
 ---
 
-## 🚀 What's New in v1.0.8-dev (Phase 2: Materials + BSE Production)
+---
+
+## 🗺️ Roadmap (Phases 3-5)
+
+### Phase 3: Quantum-Enhanced Precision (v1.2.0 - v1.3.0)
+**Goal:** "Beyond the Standard Halo"
+- **Physics**:
+  - [ ] **Multi-phonon scattering**: Temperature-dependent rates for cryogenic detectors.
+  - [ ] **Magnetic Materials**: Spin-dependent form factors (e.g., YIG).
+  - [ ] **Q-BSE**: Quantum-accelerated Bethe-Salpeter solver (Tensor Network / VQE).
+- **AI/Ops**:
+  - [ ] **LangChain Agent**: "Research Assistant" mode for hypothesis generation.
+  - [ ] **Wolfram Integration**: Symbolic math bridge for analytical gradients.
+
+### Phase 4: Galactic Scale (v1.4.0 - v1.5.0)
+**Goal:** "Full N-Body Integration"
+- **Physics**:
+  - [ ] **Anisotropic Halo**: Non-Maxwellian velocity distributions (Gaia Sausage/Enceladus).
+  - [ ] **Directional Detection**: Daily modulation of recoil vectors ($d^2R/dE d\Omega$).
+  - [ ] **Stream Integration**: S1/S2 stream specific velocity components.
+- **Infrastructure**:
+  - [ ] **Distributed Compute**: Ray/Dask integration for massive parameter scans.
+  - [ ] **Global Data Fusion**: Real-time experimental data ingestion (XENON, LZ).
+
+### Phase 5: Universal Convergence (v2.0.0+)
+**Goal:** "The Standard Model of Dark Matter Detection"
+- **Physics**:
+  - [ ] **Axion/ALP Integration**: Primakoff effect and axio-electric effect.
+  - [ ] **Migdal Effect**: Atomic ionization from nuclear scattering.
+  - [ ] **Effective Field Theory (EFT)**: Non-relativistic operator expansion.
+- **Meta**:
+  - [ ] **Autonomous Discovery**: AI that proposes and simulates new detector materials.
+  - [ ] **Digital Twin**: Full detector simulation (Geant4 + DMCA physics).
+
+---
+
+## 🚀 What's New in v1.1.0 (Phase 2: Materials + BSE + AstroPy)
 
 ### 🔬 Extended Materials Library
 
