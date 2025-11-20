@@ -7,11 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.0.8-dev] - 2025-11-12 (Phase 2 - In Development)
+## [1.1.0] - 2025-11-20 (Phase 2 - Completed)
 
-### 🚧 Phase 2: Extended Materials + BSE Production Integration
+### ✅ Phase 2: Extended Materials, BSE Production, and Live Halo Data
 
-Phase 2 development focusing on materials library expansion, BSE external format specification, and automatic material selection. Maintains NNSL×DFI-META×SIDRCE validation (12/12 tests pass, 100%).
+Phase 2 development is complete. This release delivers a comprehensive materials library, production-ready BSE integration, and live astrophysical data integration via AstroPy. Maintains NNSL×DFI-META×SIDRCE validation (100% pass).
 
 ### Added
 
@@ -48,6 +48,14 @@ Phase 2 development focusing on materials library expansion, BSE external format
   - Properties: lattice constant, structure, gap, Z, excitonic flag
   - Function references for programmatic material instantiation
   - Complete metadata for user selection
+
+#### 🌌 2. AstroPy Live Halo Data (New in v1.1.0)
+
+- **Live Earth Velocity**: `get_earth_velocity_astropy()`
+  - Uses `astropy.coordinates` and `astropy.time` for precise velocity vectors.
+  - **Lazy Loading**: Optimized to prevent startup slowdowns (DFI-Meta Cycle 10).
+  - **Robust Fallback**: Automatically reverts to SHM++ (Evans 2019) if offline or IERS fails.
+  - **Caching**: `@lru_cache` for high-performance iterative calculations.
 
 **Total Materials**: Si, Ge, GaAs, NaI, CsI (5 targets covering 0.1-100 GeV DM)
 

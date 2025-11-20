@@ -25,8 +25,11 @@ References:
 from __future__ import annotations
 import numpy as np
 import warnings
+import logging
 from typing import Iterable, Dict, Optional, Literal
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 from .materials import MaterialModel, recip_vectors, wrap_k_into_bz, cell_volume
 from .astro_analysis import eta_shm
