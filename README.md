@@ -496,8 +496,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 📧 Contact
 
-- **Issues**: https://github.com/yourusername/DMCA/issues
-- **Email**: your.email@example.com
+- **Issues**: https://github.com/flamehaven01/DMCA/issues
+- **Email**: info@flamehaven.space
 
 ---
 
